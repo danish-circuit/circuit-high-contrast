@@ -1,345 +1,418 @@
 #!/usr/bin/env python3
-"""Generate all 8 Ember High Contrast theme JSON files from a single source of truth."""
+"""Generate the Circuit High Contrast dark and light theme JSON files from a single source of truth."""
 
 import json
 import os
 
 # ---------------------------------------------------------------------------
-# Color palette
+# Color palettes
+#
+# Values come from the Circuit Design System tokens
+# (frontend/packages/circuit-ui/src/styles/generated/tokens.css).
 # ---------------------------------------------------------------------------
 
-PALETTE = {
-    # Accent colors (one per theme variant)
-    "orange":       "#E96401",
-    "red":          "#F43F1A",
-    "yellow":       "#F9B031",
-    "green":        "#19FC8E",
-    "blue":         "#02B5FC",
-    "purple":       "#AE81FF",
-    "white":        "#f1f1f1",
-    "gray":         "#8f8f8f",
-    "cyan":         "#43B9D8",
-    # Terminal overrides (differ from accent colors of the same name)
-    "term_green":   "#98d800",
-    "term_blue":    "#5ccaef",
-    "term_magenta": "#f57f00",
-    "term_cyan":    "#a57fff",
-    # Neutrals
-    "fg":           "#FFFFFF",
-    "bg":           "#000000",
-    "transparent":  "#00000000",
-    "ivory":        "#F8F8F0",
-    "chalk":        "#F8F8F2",
-    "smoke":        "#CFCFC2",
-    "dim_gray":     "#787878",
-    "charcoal":     "#505050",
-    "soot":         "#3B3A32",
-    "ash":          "#222218",
-    "midnight":     "#101010",
-    "ink":          "#060621",
-    "coal":         "#000c18",
-    # Tints
-    "indigo":       "#3924be",
-    "amber":        "#9D550F",
-    "gold":         "#FFE792",
-    "khaki":        "#75715E",
-    "teal":         "#31958A",
-    "rose":         "#892F46",
-    "cerise":       "#AB395B",
-    "sage":         "#5B7E7A",
-    "cobalt":       "#0063a5",
-    "mahogany":     "#2c120b",
+DARK = {
+    "ui_theme":         "vs-dark",
+    "fg":               "#FFFFFF",
+    "bg":               "#000000",
+    "transparent":      "#00000000",
+    # Accent: text uses `accent`, borders/fills use `line` + alpha
+    "accent":           "#1ce370",  # green-9
+    "line":             "#1ce370",  # green-9
+    "inactive_fg":      "#1ce37075",
+    "hint":             "#7ce2fe",  # sky-9
+    # Syntax
+    "comment":          "#7d7d7d",  # gray-10
+    "string":           "#fbb81b",  # amber-9
+    "keyword":          "#eb605c",  # red-10
+    "type":             "#7ce2fe",  # sky-9
+    "number":           "#d398ff",  # purple-11
+    "param":            "#ffa057",  # orange-11
+    "function":         "#1ce370",  # green-9
+    "json_string":      "#ededed",  # gray-12
+    "diff_header":      "#a1a1a1",  # gray-11
+    "muted":            "#7d7d7d",  # gray-10
+    "invalid_fg":       "#FFFFFF",
+    "invalid_bg":       "#e1292f",  # red-9
+    "deprecated_bg":    "#a953f5",  # purple-9
+    # Editor surfaces
+    "caret":            "#FFFFFF",
+    "invisibles":       "#3d3d3d",  # gray-7
+    "line_highlight":   "#1d2520",  # green-2
+    "selection":        "#11572e",  # green-6
+    "selection_inactive": "#11572eA4",
+    "selection_border": "#183826",  # green-4
+    "find_highlight":   "#ffe29e",  # amber-11
+    "indent_guide":     "#4f4f4f",  # gray-8
+    "bracket":          "#ededed",  # gray-12
+    "active_guide":     "#a66b0c",  # amber-7
+    "link":             "#7eb8f1",  # blue-11
+    "marker_bg":        "#1c1c1c",  # gray-2
+    "marker_error":     "#72212c",  # red-6
+    "marker_warning":   "#885903",  # amber-6
+    "hover_surface":    "#1c1c1c",  # gray-2
+    "debug":            "#7ce2fe",  # sky-9
+    "diff_added":       "#18c15f55",  # green-8
+    "diff_removed":     "#d1012370",  # red-8
+    # Status
+    "error":            "#eb605c",  # red-10
+    "warning":          "#ffa057",  # orange-11
+    "added":            "#1ce370",  # green-9
+    "modified":         "#fbb81b",  # amber-9
+    "renamed":          "#7ce2fe",  # sky-9
+    "submodule":        "#d398ff",  # purple-11
+    "conflict":         "#ffa057",  # orange-11
+    "ignored":          "#7d7d7d",  # gray-10
+    # Terminal
+    "ansi_black":           "#7d7d7d",  # gray-10
+    "ansi_bright_black":    "#a1a1a1",  # gray-11
+    "ansi_red":             "#eb605c",  # red-10
+    "ansi_bright_red":      "#fa9b94",  # red-11
+    "ansi_green":           "#1ce370",  # green-9
+    "ansi_bright_green":    "#9ff9c5",  # green-11
+    "ansi_yellow":          "#fbb81b",  # amber-9
+    "ansi_bright_yellow":   "#ffe29e",  # amber-11
+    "ansi_blue":            "#489ff5",  # blue-10
+    "ansi_bright_blue":     "#7eb8f1",  # blue-11
+    "ansi_magenta":         "#b466fd",  # purple-10
+    "ansi_bright_magenta":  "#d398ff",  # purple-11
+    "ansi_cyan":            "#7ce2fe",  # sky-9
+    "ansi_bright_cyan":     "#c2f3ff",  # sky-12
+    "ansi_white":           "#ededed",  # gray-12
+    "ansi_bright_white":    "#FFFFFF",
+    # Alpha levels (0–255) applied to `line`
+    "find_match_alpha":     200,
+    "list_active_alpha":    156,
+    "list_inactive_alpha":  96,
 }
 
-FG          = PALETTE["fg"]
-BG          = PALETTE["bg"]
-TRANSPARENT = PALETTE["transparent"]
+LIGHT = {
+    "ui_theme":         "vs",
+    "fg":               "#171717",  # gray-12
+    "bg":               "#FFFFFF",
+    "transparent":      "#FFFFFF00",
+    "accent":           "#0f763a",  # green-10
+    "line":             "#18c15f",  # green-8
+    "inactive_fg":      "#0f763aA0",
+    "hint":             "#00749e",  # sky-11
+    "comment":          "#707070",  # gray-11
+    "string":           "#a35c00",  # amber-11, darkened for 4.5:1 contrast on white
+    "keyword":          "#a60d11",  # red-11
+    "type":             "#00749e",  # sky-11
+    "number":           "#711fb7",  # purple-11
+    "param":            "#cc4e00",  # orange-11
+    "function":         "#0f763a",  # green-10
+    "json_string":      "#171717",  # gray-12
+    "diff_header":      "#707070",  # gray-11
+    "muted":            "#858585",  # gray-10
+    "invalid_fg":       "#FFFFFF",
+    "invalid_bg":       "#e1292f",  # red-9
+    "deprecated_bg":    "#a953f5",  # purple-9
+    "caret":            "#171717",  # gray-12
+    "invisibles":       "#dbdbdb",  # gray-7
+    "line_highlight":   "#effaf4",  # green-2
+    "selection":        "#adebc7",  # green-6
+    "selection_inactive": "#def7e8",  # green-4
+    "selection_border": "#adebc7",  # green-6
+    "find_highlight":   "#fbe579",  # amber-5
+    "indent_guide":     "#c7c7c7",  # gray-8
+    "bracket":          "#171717",  # gray-12
+    "active_guide":     "#fece5c",  # amber-7
+    "link":             "#0a599e",  # blue-11
+    "marker_bg":        "#f7f7f7",  # gray-2
+    "marker_error":     "#ffdbdc",  # red-4
+    "marker_warning":   "#ffef9e",  # amber-4
+    "hover_surface":    "#f2f2f2",  # gray-3
+    "debug":            "#00749e",  # sky-11
+    "diff_added":       "#18c15f40",  # green-8
+    "diff_removed":     "#e1292f33",  # red-9
+    "error":            "#c72a2e",  # red-10
+    "warning":          "#cc4e00",  # orange-11
+    "added":            "#0f763a",  # green-10
+    "modified":         "#a35c00",  # amber-11 (darkened)
+    "renamed":          "#00749e",  # sky-11
+    "submodule":        "#711fb7",  # purple-11
+    "conflict":         "#cc4e00",  # orange-11
+    "ignored":          "#858585",  # gray-10
+    "ansi_black":           "#171717",  # gray-12
+    "ansi_bright_black":    "#707070",  # gray-11
+    "ansi_red":             "#c72a2e",  # red-10
+    "ansi_bright_red":      "#a60d11",  # red-11
+    "ansi_green":           "#0f763a",  # green-10
+    "ansi_bright_green":    "#139a4c",  # green-9
+    "ansi_yellow":          "#a35c00",  # amber-11 (darkened)
+    "ansi_bright_yellow":   "#c56f00",  # amber-11
+    "ansi_blue":            "#0a599e",  # blue-11
+    "ansi_bright_blue":     "#047ad7",  # blue-10
+    "ansi_magenta":         "#711fb7",  # purple-11
+    "ansi_bright_magenta":  "#9343db",  # purple-10
+    "ansi_cyan":            "#00749e",  # sky-11
+    "ansi_bright_cyan":     "#10a27b",  # teal-11
+    "ansi_white":           "#a6a6a6",  # gray-9
+    "ansi_bright_white":    "#c7c7c7",  # gray-8
+    "find_match_alpha":     160,
+    "list_active_alpha":    110,
+    "list_inactive_alpha":  60,
+}
+
+MODES = {"dark": DARK, "light": LIGHT}
 
 
-def c(expr):
-    """Resolve ``"color"`` or ``"color/alpha"`` where alpha is 0–255.
-
-    >>> c("red")
-    '#F43F1A'
-    >>> c("red/160")
-    '#F43F1AA0'
-    """
-    if "/" in expr:
-        name, alpha_str = expr.split("/", 1)
-        return f"{PALETTE[name]}{int(alpha_str):02X}"
-    return PALETTE[expr]
+def resolver(p):
+    """Return ``c(expr)`` resolving ``"name"`` or ``"name/alpha"`` (alpha 0–255) against palette ``p``."""
+    def c(expr):
+        if "/" in expr:
+            name, alpha_str = expr.split("/", 1)
+            return f"{p[name]}{int(alpha_str):02X}"
+        return p[expr]
+    return c
 
 
 # ---------------------------------------------------------------------------
-# Token colors (shared across all variants)
+# Token colors
 # ---------------------------------------------------------------------------
 
-TOKEN_COLORS = [
-    {
-        "settings": {
-            "foreground": FG,
-            "background": c("coal"),
-            "caret": c("ivory"),
-            "invisibles": c("soot"),
-            "lineHighlight": c("mahogany"),
-            "selection": c("mahogany"),
-            "findHighlight": c("gold"),
-            "findHighlightForeground": BG,
-            "selectionBorder": c("ash"),
-            "activeGuide": c("amber/176"),
-            "bracketsForeground": c("chalk/165"),
-            "bracketsOptions": "underline",
-            "bracketContentsForeground": c("chalk/165"),
-            "bracketContentsOptions": "underline",
-            "tagsOptions": "stippled_underline",
-        }
-    },
-    {
-        "name": "Comment",
-        "scope": ["comment"],
-        "settings": {"foreground": c("dim_gray")},
-    },
-    {
-        "name": "String",
-        "scope": "string",
-        "settings": {"foreground": c("yellow")},
-    },
-    {
-        "name": "Number",
-        "scope": "constant.numeric",
-        "settings": {"foreground": c("purple")},
-    },
-    {
-        "name": "Built-in constant",
-        "scope": "constant.language",
-        "settings": {"foreground": c("purple")},
-    },
-    {
-        "name": "User-defined constant",
-        "scope": ["constant.character", "constant.other"],
-        "settings": {"foreground": c("purple")},
-    },
-    {
-        "name": "Variable",
-        "scope": "variable",
-        "settings": {"fontStyle": ""},
-    },
-    {
-        "name": "Keyword",
-        "scope": "keyword",
-        "settings": {"fontStyle": "bold", "foreground": c("red")},
-    },
-    {
-        "name": "Storage",
-        "scope": "storage",
-        "settings": {"fontStyle": "bold", "foreground": c("red")},
-    },
-    {
-        "name": "Storage type",
-        "scope": "storage.type",
-        "settings": {"fontStyle": "italic", "foreground": c("blue")},
-    },
-    {
-        "name": "Class name",
-        "scope": "entity.name.class",
-        "settings": {"fontStyle": "underline", "foreground": c("green")},
-    },
-    {
-        "name": "Inherited class",
-        "scope": "entity.other.inherited-class",
-        "settings": {"fontStyle": "italic underline", "foreground": c("green")},
-    },
-    {
-        "name": "Function name",
-        "scope": "entity.name.function",
-        "settings": {"fontStyle": "", "foreground": c("green")},
-    },
-    {
-        "name": "Function argument",
-        "scope": "variable.parameter",
-        "settings": {"fontStyle": "italic", "foreground": c("orange")},
-    },
-    {
-        "name": "Tag name",
-        "scope": "entity.name.tag",
-        "settings": {"fontStyle": "bold", "foreground": c("red")},
-    },
-    {
-        "name": "Tag attribute",
-        "scope": "entity.other.attribute-name",
-        "settings": {"fontStyle": "", "foreground": c("green")},
-    },
-    {
-        "name": "Library function",
-        "scope": "support.function",
-        "settings": {"fontStyle": "", "foreground": c("blue")},
-    },
-    {
-        "name": "Library constant",
-        "scope": "support.constant",
-        "settings": {"fontStyle": "", "foreground": c("blue")},
-    },
-    {
-        "name": "Library class/type",
-        "scope": ["support.type", "support.class"],
-        "settings": {"fontStyle": "italic", "foreground": c("blue")},
-    },
-    {
-        "name": "Library variable",
-        "scope": "support.other.variable",
-        "settings": {"fontStyle": ""},
-    },
-    {
-        "name": "Invalid",
-        "scope": "invalid",
-        "settings": {
-            "background": c("red"),
-            "fontStyle": "bold",
-            "foreground": c("ivory"),
+def build_token_colors(p):
+    c = resolver(p)
+    FG = c("fg")
+    return [
+        {
+            "settings": {
+                "foreground": FG,
+                "background": c("bg"),
+                "caret": c("caret"),
+                "invisibles": c("invisibles"),
+                "lineHighlight": c("line_highlight"),
+                "selection": c("selection"),
+                "findHighlight": c("find_highlight"),
+                "findHighlightForeground": c("fg"),
+                "selectionBorder": c("selection_border"),
+                "activeGuide": c("active_guide/176"),
+                "bracketsForeground": c("bracket/165"),
+                "bracketsOptions": "underline",
+                "bracketContentsForeground": c("bracket/165"),
+                "bracketContentsOptions": "underline",
+                "tagsOptions": "stippled_underline",
+            }
         },
-    },
-    {
-        "name": "Invalid deprecated",
-        "scope": "invalid.deprecated",
-        "settings": {"background": c("purple"), "foreground": c("ivory")},
-    },
-    {
-        "name": "JSON String",
-        "scope": ["meta.structure.dictionary.json", "string.quoted.double.json"],
-        "settings": {"foreground": c("smoke")},
-    },
-    {
-        "name": "diff.header",
-        "scope": "meta.diff, meta.diff.header",
-        "settings": {"foreground": c("khaki")},
-    },
-    {
-        "name": "diff.deleted",
-        "scope": "markup.deleted",
-        "settings": {"background": c("red"), "foreground": c("red")},
-    },
-    {
-        "name": "diff.inserted",
-        "scope": "markup.inserted",
-        "settings": {"foreground": c("green")},
-    },
-    {
-        "name": "diff.changed",
-        "scope": "markup.changed",
-        "settings": {"foreground": c("yellow")},
-    },
-    {
-        "scope": "constant.numeric.line-number.find-in-files - match",
-        "settings": {"foreground": c("purple/160")},
-    },
-    {
-        "scope": "entity.name.filename.find-in-files",
-        "settings": {"foreground": c("yellow")},
-    },
-    {
-        "name": "Language methods",
-        "scope": ["variable.language"],
-        "settings": {"foreground": c("green")},
-    },
-    {
-        "scope": "heading.1.markdown",
-        "settings": {"foreground": c("green"), "fontStyle": "bold"},
-    },
-    {
-        "scope": "punctuation.definition.heading.markdown",
-        "settings": {"foreground": c("green")},
-    },
-    {
-        "scope": "entity.name.section.markdown",
-        "settings": {"foreground": c("green")},
-    },
-    {
-        "scope": "punctuation.definition.list.begin.markdown",
-        "settings": {"foreground": c("purple")},
-    },
-    {
-        "scope": "meta.image.inline.markdown",
-        "settings": {"foreground": c("yellow")},
-    },
-    {
-        "scope": "markup.bold.markdown",
-        "settings": {"foreground": FG, "fontStyle": "bold"},
-    },
-    {
-        "scope": "markup.italic.markdown",
-        "settings": {"foreground": FG, "fontStyle": "italic"},
-    },
-    {
-        "scope": "markup.inline.raw.string.markdown",
-        "settings": {"foreground": c("blue")},
-    },
-    {
-        "scope": "meta.separator.markdown",
-        "settings": {"foreground": c("gray")},
-    },
-    {
-        "scope": [
-            "punctuation.definition.template-expression.begin",
-            "punctuation.definition.template-expression.end",
-        ],
-        "settings": {"foreground": c("purple")},
-    },
-    {
-        "scope": [
-            "variable.other.object",
-            "punctuation.accessor",
-            "meta.brace.round",
-            "variable.other.readwrite",
-            "punctuation.separator.comma",
-        ],
-        "settings": {"foreground": FG},
-    },
-]
+        {
+            "name": "Comment",
+            "scope": ["comment"],
+            "settings": {"foreground": c("comment")},
+        },
+        {
+            "name": "String",
+            "scope": "string",
+            "settings": {"foreground": c("string")},
+        },
+        {
+            "name": "Number",
+            "scope": "constant.numeric",
+            "settings": {"foreground": c("number")},
+        },
+        {
+            "name": "Built-in constant",
+            "scope": "constant.language",
+            "settings": {"foreground": c("number")},
+        },
+        {
+            "name": "User-defined constant",
+            "scope": ["constant.character", "constant.other"],
+            "settings": {"foreground": c("number")},
+        },
+        {
+            "name": "Variable",
+            "scope": "variable",
+            "settings": {"fontStyle": ""},
+        },
+        {
+            "name": "Keyword",
+            "scope": "keyword",
+            "settings": {"fontStyle": "bold", "foreground": c("keyword")},
+        },
+        {
+            "name": "Storage",
+            "scope": "storage",
+            "settings": {"fontStyle": "bold", "foreground": c("keyword")},
+        },
+        {
+            "name": "Storage type",
+            "scope": "storage.type",
+            "settings": {"fontStyle": "italic", "foreground": c("type")},
+        },
+        {
+            "name": "Class name",
+            "scope": "entity.name.class",
+            "settings": {"fontStyle": "underline", "foreground": c("function")},
+        },
+        {
+            "name": "Inherited class",
+            "scope": "entity.other.inherited-class",
+            "settings": {"fontStyle": "italic underline", "foreground": c("function")},
+        },
+        {
+            "name": "Function name",
+            "scope": "entity.name.function",
+            "settings": {"fontStyle": "", "foreground": c("function")},
+        },
+        {
+            "name": "Function argument",
+            "scope": "variable.parameter",
+            "settings": {"fontStyle": "italic", "foreground": c("param")},
+        },
+        {
+            "name": "Tag name",
+            "scope": "entity.name.tag",
+            "settings": {"fontStyle": "bold", "foreground": c("keyword")},
+        },
+        {
+            "name": "Tag attribute",
+            "scope": "entity.other.attribute-name",
+            "settings": {"fontStyle": "", "foreground": c("function")},
+        },
+        {
+            "name": "Library function",
+            "scope": "support.function",
+            "settings": {"fontStyle": "", "foreground": c("type")},
+        },
+        {
+            "name": "Library constant",
+            "scope": "support.constant",
+            "settings": {"fontStyle": "", "foreground": c("type")},
+        },
+        {
+            "name": "Library class/type",
+            "scope": ["support.type", "support.class"],
+            "settings": {"fontStyle": "italic", "foreground": c("type")},
+        },
+        {
+            "name": "Library variable",
+            "scope": "support.other.variable",
+            "settings": {"fontStyle": ""},
+        },
+        {
+            "name": "Invalid",
+            "scope": "invalid",
+            "settings": {
+                "background": c("invalid_bg"),
+                "fontStyle": "bold",
+                "foreground": c("invalid_fg"),
+            },
+        },
+        {
+            "name": "Invalid deprecated",
+            "scope": "invalid.deprecated",
+            "settings": {"background": c("deprecated_bg"), "foreground": c("invalid_fg")},
+        },
+        {
+            "name": "JSON String",
+            "scope": ["meta.structure.dictionary.json", "string.quoted.double.json"],
+            "settings": {"foreground": c("json_string")},
+        },
+        {
+            "name": "diff.header",
+            "scope": "meta.diff, meta.diff.header",
+            "settings": {"foreground": c("diff_header")},
+        },
+        {
+            "name": "diff.deleted",
+            "scope": "markup.deleted",
+            "settings": {"foreground": c("error")},
+        },
+        {
+            "name": "diff.inserted",
+            "scope": "markup.inserted",
+            "settings": {"foreground": c("added")},
+        },
+        {
+            "name": "diff.changed",
+            "scope": "markup.changed",
+            "settings": {"foreground": c("modified")},
+        },
+        {
+            "scope": "constant.numeric.line-number.find-in-files - match",
+            "settings": {"foreground": c("number/160")},
+        },
+        {
+            "scope": "entity.name.filename.find-in-files",
+            "settings": {"foreground": c("string")},
+        },
+        {
+            "name": "Language methods",
+            "scope": ["variable.language"],
+            "settings": {"foreground": c("function")},
+        },
+        {
+            "scope": "heading.1.markdown",
+            "settings": {"foreground": c("function"), "fontStyle": "bold"},
+        },
+        {
+            "scope": "punctuation.definition.heading.markdown",
+            "settings": {"foreground": c("function")},
+        },
+        {
+            "scope": "entity.name.section.markdown",
+            "settings": {"foreground": c("function")},
+        },
+        {
+            "scope": "punctuation.definition.list.begin.markdown",
+            "settings": {"foreground": c("number")},
+        },
+        {
+            "scope": "meta.image.inline.markdown",
+            "settings": {"foreground": c("string")},
+        },
+        {
+            "scope": "markup.bold.markdown",
+            "settings": {"foreground": FG, "fontStyle": "bold"},
+        },
+        {
+            "scope": "markup.italic.markdown",
+            "settings": {"foreground": FG, "fontStyle": "italic"},
+        },
+        {
+            "scope": "markup.inline.raw.string.markdown",
+            "settings": {"foreground": c("type")},
+        },
+        {
+            "scope": "meta.separator.markdown",
+            "settings": {"foreground": c("muted")},
+        },
+        {
+            "scope": [
+                "punctuation.definition.template-expression.begin",
+                "punctuation.definition.template-expression.end",
+            ],
+            "settings": {"foreground": c("number")},
+        },
+        {
+            "scope": [
+                "variable.other.object",
+                "punctuation.accessor",
+                "meta.brace.round",
+                "variable.other.readwrite",
+                "punctuation.separator.comma",
+            ],
+            "settings": {"foreground": FG},
+        },
+    ]
 
 
 # ---------------------------------------------------------------------------
-# Per-variant overrides
+# Workbench colors
 # ---------------------------------------------------------------------------
 
-# editorSuggestWidget.highlightForeground and editorHint.foreground
-HIGHLIGHT_MAP = {
-    "orange": c("yellow"),     # #F9C449
-    "red":    c("yellow"),     # #F9C449
-    "yellow": c("orange"),     # #E96401
-    "green":  c("cyan"),       # #43B9D8
-    "blue":   c("orange"),     # #E96401
-    "purple": c("cyan"),       # #43B9D8
-    "white":  c("cyan"),       # #43B9D8
-    "gray":   c("cyan"),       # #43B9D8
-}
+def build_colors(p):
+    """Build the ``colors`` dict for palette ``p``."""
+    c = resolver(p)
+    FG = c("fg")
+    BG = c("bg")
+    TRANSPARENT = c("transparent")
+    a = c("accent")
+    ln = c("line")
 
-# editor.findMatchBackground — accent + alpha
-FIND_MATCH_ALPHA = {
-    "orange": 255, "red": 255, "yellow": 200, "green": 200,
-    "blue":   255, "purple": 255, "white": 150, "gray": 255,
-}
-
-# list.activeSelectionBackground — accent + alpha (lighter accents need lower
-# opacity to achieve similar visual weight)
-LIST_ACTIVE_ALPHA = {
-    "orange": 204, "red": 204, "yellow": 154, "green": 156,
-    "blue":   204, "purple": 204, "white": 124, "gray": 204,
-}
-
-# list.inactiveSelectionBackground — accent + alpha
-LIST_INACTIVE_ALPHA = {
-    "orange": 96, "red": 96, "yellow": 83, "green": 96,
-    "blue":   96, "purple": 96, "white": 79, "gray": 96,
-}
-
-
-def build_colors(accent):
-    """Build the ``colors`` dict for a given accent name."""
-    a = PALETTE[accent]  # accent color, e.g. "#E96401"
-
-    # Helper for accent + alpha (0–255)
     def aa(alpha):
-        return f"{a}{alpha:02X}"
+        return f"{ln}{alpha:02X}"
 
     return {
         "foreground": FG,
@@ -349,56 +422,56 @@ def build_colors(accent):
         "focusBorder": aa(117),
         "editor.foreground": FG,
         "editor.background": BG,
-        "editor.inactiveSelectionBackground": c("indigo/164"),
-        "editor.findMatchBackground": aa(FIND_MATCH_ALPHA[accent]),
+        "editor.inactiveSelectionBackground": c("selection_inactive"),
+        "editor.findMatchBackground": aa(p["find_match_alpha"]),
         "editor.findMatchForeground": c("fg/204"),
         "editor.findMatchBorder": TRANSPARENT,
-        "editor.selectionBackground": c("indigo"),
-        "editor.selectionForeground": c("coal"),
+        "editor.selectionBackground": c("selection"),
+        "editor.selectionForeground": FG,
         "editor.lineHighlightBorder": aa(117),
         "editorLineNumber.foreground": a,
         "editorLineNumber.activeForeground": a,
-        "editorMarkerNavigation.background": c("ink"),
-        "editorMarkerNavigationError.background": c("cerise"),
-        "editorMarkerNavigationWarning.background": c("sage"),
-        "editorLink.activeForeground": c("cobalt"),
+        "editorMarkerNavigation.background": c("marker_bg"),
+        "editorMarkerNavigationError.background": c("marker_error"),
+        "editorMarkerNavigationWarning.background": c("marker_warning"),
+        "editorLink.activeForeground": c("link"),
         "editor.findMatchHighlightBackground": aa(102),
         "editor.findMatchHighlightForeground": FG,
-        "terminal.ansiBlack": c("gray"),
-        "terminal.ansiBrightBlack": c("gray"),
-        "terminal.ansiRed": c("red"),
-        "terminal.ansiBrightRed": c("red"),
-        "terminal.ansiGreen": c("term_green"),
-        "terminal.ansiBrightGreen": c("term_green"),
-        "terminal.ansiYellow": c("yellow"),
-        "terminal.ansiBrightYellow": c("yellow"),
-        "terminal.ansiBlue": c("term_blue"),
-        "terminal.ansiBrightBlue": c("term_blue"),
-        "terminal.ansiMagenta": c("term_magenta"),
-        "terminal.ansiBrightMagenta": c("term_magenta"),
-        "terminal.ansiCyan": c("term_cyan"),
-        "terminal.ansiBrightCyan": c("term_cyan"),
-        "terminal.ansiWhite": c("white"),
-        "terminal.ansiBrightWhite": c("white"),
+        "terminal.ansiBlack": c("ansi_black"),
+        "terminal.ansiBrightBlack": c("ansi_bright_black"),
+        "terminal.ansiRed": c("ansi_red"),
+        "terminal.ansiBrightRed": c("ansi_bright_red"),
+        "terminal.ansiGreen": c("ansi_green"),
+        "terminal.ansiBrightGreen": c("ansi_bright_green"),
+        "terminal.ansiYellow": c("ansi_yellow"),
+        "terminal.ansiBrightYellow": c("ansi_bright_yellow"),
+        "terminal.ansiBlue": c("ansi_blue"),
+        "terminal.ansiBrightBlue": c("ansi_bright_blue"),
+        "terminal.ansiMagenta": c("ansi_magenta"),
+        "terminal.ansiBrightMagenta": c("ansi_bright_magenta"),
+        "terminal.ansiCyan": c("ansi_cyan"),
+        "terminal.ansiBrightCyan": c("ansi_bright_cyan"),
+        "terminal.ansiWhite": c("ansi_white"),
+        "terminal.ansiBrightWhite": c("ansi_bright_white"),
         "titleBar.activeForeground": a,
         "editorSuggestWidget.background": BG,
         "editorSuggestWidget.foreground": FG,
-        "editorSuggestWidget.border": a,
-        "editorSuggestWidget.highlightForeground": HIGHLIGHT_MAP[accent],
+        "editorSuggestWidget.border": ln,
+        "editorSuggestWidget.highlightForeground": c("hint"),
         "editorSuggestWidget.selectedBackground": aa(117),
         "editorHoverWidget.background": BG,
         "editorHoverWidget.border": aa(117),
         "editorWidget.background": BG,
         "editorWidget.border": BG,
-        "editorIndentGuide.activeBackground": c("charcoal"),
+        "editorIndentGuide.activeBackground": c("indent_guide"),
         "breadcrumb.foreground": a,
         "menu.background": BG,
         "menu.border": aa(117),
         "panel.background": BG,
-        "panel.dropBorder": a,
+        "panel.dropBorder": ln,
         "panel.border": aa(117),
         "panelTitle.activeForeground": a,
-        "panelTitle.inactiveForeground": aa(117),
+        "panelTitle.inactiveForeground": c("inactive_fg"),
         "panelSection.border": aa(117),
         "sideBar.background": BG,
         "sideBarSectionHeader.border": aa(117),
@@ -412,7 +485,7 @@ def build_colors(accent):
         "activityBar.background": BG,
         "activityBar.foreground": a,
         "activityBar.border": aa(117),
-        "activityBar.inactiveForeground": aa(117),
+        "activityBar.inactiveForeground": c("inactive_fg"),
         "activityBarBadge.background": BG,
         "activityBarBadge.foreground": a,
         "titleBar.activeBackground": BG,
@@ -431,7 +504,7 @@ def build_colors(accent):
         "tab.unfocusedHoverBackground": aa(37),
         "tab.border": aa(117),
         "tab.activeBorder": FG,
-        "tab.unfocusedActiveBorder": a,
+        "tab.unfocusedActiveBorder": ln,
         "tab.activeModifiedBorder": aa(117),
         "tab.inactiveModifiedBorder": aa(117),
         "tab.hoverBorder": aa(117),
@@ -445,28 +518,28 @@ def build_colors(accent):
         "statusBar.border": aa(117),
         "statusBar.noFolderBackground": BG,
         "statusBar.noFolderForeground": a,
-        "statusBar.debuggingBackground": aa(21) if accent == "blue" else c("cyan/21"),
+        "statusBar.debuggingBackground": c("debug/21"),
         "statusBar.debuggingForeground": a,
-        "statusBarItem.hoverBackground": c("midnight"),
-        "notificationCenter.border": a,
+        "statusBarItem.hoverBackground": c("hover_surface"),
+        "notificationCenter.border": ln,
         "notifications.foreground": FG,
         "notifications.background": BG,
         "notifications.border": aa(117),
         "notificationCenterHeader.background": BG,
         "notificationCenterHeader.foreground": FG,
-        "editorHint.foreground": HIGHLIGHT_MAP[accent],
-        "diffEditor.insertedTextBackground": c("teal/85"),
-        "diffEditor.insertedTextBorder": c("teal/85"),
-        "diffEditor.removedTextBackground": c("rose/136"),
-        "diffEditor.removedTextBorder": c("teal/85"),
+        "editorHint.foreground": c("hint"),
+        "diffEditor.insertedTextBackground": c("diff_added"),
+        "diffEditor.insertedTextBorder": c("diff_added"),
+        "diffEditor.removedTextBackground": c("diff_removed"),
+        "diffEditor.removedTextBorder": c("diff_removed"),
         "merge.border": aa(117),
         "peekView.border": aa(117),
         "peekViewTitle.background": BG,
         "peekViewTitleLabel.foreground": FG,
         "debugExceptionWidget.background": BG,
-        "debugExceptionWidget.border": a,
+        "debugExceptionWidget.border": ln,
         "debugToolBar.background": BG,
-        "debugToolBar.border": a,
+        "debugToolBar.border": ln,
         "button.background": BG,
         "button.foreground": FG,
         "button.hoverBackground": BG,
@@ -476,34 +549,35 @@ def build_colors(accent):
         "input.background": aa(20),
         "input.foreground": FG,
         "input.border": aa(117),
-        "input.placeholderForeground": aa(117),
+        "input.placeholderForeground": c("inactive_fg"),
         "checkbox.border": aa(117),
         "quickInput.background": BG,
-        "list.activeSelectionBackground": aa(LIST_ACTIVE_ALPHA[accent]),
-        "list.inactiveSelectionBackground": aa(LIST_INACTIVE_ALPHA[accent]),
+        "list.activeSelectionBackground": aa(p["list_active_alpha"]),
+        "list.activeSelectionForeground": FG,
+        "list.inactiveSelectionBackground": aa(p["list_inactive_alpha"]),
+        "list.inactiveSelectionForeground": FG,
         "list.hoverBackground": aa(117),
-        "list.inactiveFocusOutline": a,
+        "list.inactiveFocusOutline": ln,
         "gitlens.trailingLineBackgroundColor": BG,
         "gitlens.trailingLineForegroundColor": a,
         "terminal.border": aa(117),
-        "editorWarning.foreground": c("orange"),
-        "list.warningForeground": c("orange"),
-        "editorOverviewRuler.warningForeground": c("orange"),
-        "gitDecoration.modifiedResourceForeground": c("yellow"),
-        "gitDecoration.addedResourceForeground": c("green"),
-        "gitDecoration.deletedResourceForeground": c("red"),
-        "gitDecoration.untrackedResourceForeground": c("green"),
-        "gitDecoration.ignoredResourceForeground": c("gray"),
-        "gitDecoration.conflictingResourceForeground": c("orange"),
-        "gitDecoration.renamedResourceForeground": c("blue"),
-        "gitDecoration.stageDeletedResourceForeground": c("red"),
-        "gitDecoration.stageModifiedResourceForeground": c("yellow"),
-        "gitDecoration.submoduleResourceForeground": c("purple"),
+        "editorWarning.foreground": c("warning"),
+        "list.warningForeground": c("warning"),
+        "editorOverviewRuler.warningForeground": c("warning"),
+        "gitDecoration.modifiedResourceForeground": c("modified"),
+        "gitDecoration.addedResourceForeground": c("added"),
+        "gitDecoration.deletedResourceForeground": c("error"),
+        "gitDecoration.untrackedResourceForeground": c("added"),
+        "gitDecoration.ignoredResourceForeground": c("ignored"),
+        "gitDecoration.conflictingResourceForeground": c("conflict"),
+        "gitDecoration.renamedResourceForeground": c("renamed"),
+        "gitDecoration.stageDeletedResourceForeground": c("error"),
+        "gitDecoration.stageModifiedResourceForeground": c("modified"),
+        "gitDecoration.submoduleResourceForeground": c("submodule"),
         "scrollbar.shadow": BG,
         "scrollbarSlider.background": aa(64),
         "scrollbarSlider.hoverBackground": aa(112),
         "scrollbarSlider.activeBackground": aa(204),
-        # Chat UI
         # Chat UI
         "chat.requestBubbleHoverBackground": aa(50),
         "chat.requestCodeBorder": aa(80),
@@ -513,20 +587,20 @@ def build_colors(accent):
         "chat.avatarForeground": a,
         "textPreformat.foreground": a,
         "chat.editedFileForeground": a,
-        "chat.linesAddedForeground": c("green"),
-        "chat.linesRemovedForeground": c("red"),
+        "chat.linesAddedForeground": c("added"),
+        "chat.linesRemovedForeground": c("error"),
         "chat.checkpointSeparator": aa(117),
-        "chat.thinkingShimmer": a,
+        "chat.thinkingShimmer": ln,
         # Inline Chat
         "inlineChat.background": BG,
         "inlineChat.foreground": FG,
         "inlineChat.border": aa(117),
         "inlineChatInput.border": aa(117),
-        "inlineChatInput.focusBorder": a,
+        "inlineChatInput.focusBorder": ln,
         "inlineChatInput.background": BG,
-        "inlineChatInput.placeholderForeground": aa(117),
-        "inlineChatDiff.inserted": c("teal/85"),
-        "inlineChatDiff.removed": c("rose/136"),
+        "inlineChatInput.placeholderForeground": c("inactive_fg"),
+        "inlineChatDiff.inserted": c("diff_added"),
+        "inlineChatDiff.removed": c("diff_removed"),
     }
 
 
@@ -656,26 +730,25 @@ def _emit_scope_array(lines, scope_list, has_next=True):
     lines.append(f"            ]{comma_after}")
 
 
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-VARIANTS = ["orange", "red", "yellow", "green", "blue", "purple", "white", "gray"]
-
-
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     themes_dir = os.path.join(script_dir, "themes")
+    os.makedirs(themes_dir, exist_ok=True)
 
-    for accent in VARIANTS:
+    for mode, palette in MODES.items():
         theme = {
             "$schema": "vscode://schemas/color-theme",
-            "name": f"Ember High Contrast ({accent})",
-            "tokenColors": TOKEN_COLORS,
-            "colors": build_colors(accent),
+            "name": f"Circuit High Contrast {mode.capitalize()}",
+            "tokenColors": build_token_colors(palette),
+            "colors": build_colors(palette),
         }
         output = serialize_theme(theme)
-        path = os.path.join(themes_dir, f"ember-high-contrast-{accent}.json")
+        path = os.path.join(themes_dir, f"circuit-high-contrast-{mode}.json")
         with open(path, "w", newline="\n") as f:
             f.write(output)
         print(f"  wrote {path}")

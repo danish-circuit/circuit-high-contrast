@@ -1,4 +1,4 @@
-"""Generate a conic gradient ring icon for Ember High Contrast theme."""
+"""Generate a conic gradient ring icon for Circuit High Contrast theme."""
 
 from PIL import Image
 import math
@@ -10,17 +10,14 @@ RADIUS = SIZE // 2 - PADDING
 RING_THICKNESS = 50  # width of the ring
 INNER_RADIUS = RADIUS - RING_THICKNESS
 
-# Theme accent colors evenly spaced around the circle.
+# Circuit greens evenly spaced around the circle.
 # Last stop wraps back to the first color for a seamless loop.
 COLORS = [
-    (0 / 7, (233, 100, 1)),    # orange  #E96401
-    (1 / 7, (244, 63, 26)),    # red     #F43F1A
-    (2 / 7, (249, 196, 73)),   # yellow  #F9C449
-    (3 / 7, (25, 252, 142)),   # green   #19FC8E
-    (4 / 7, (2, 181, 252)),    # blue    #02B5FC
-    (5 / 7, (174, 129, 255)),  # purple  #AE81FF
-    # (6 / 7, (241, 241, 241)),  # white   #f1f1f1
-    (7 / 7, (233, 100, 1)),    # orange  (wrap)
+    (0 / 4, (24, 193, 95)),    # green-8          #18c15f
+    (1 / 4, (28, 227, 112)),   # green-9 (dark)   #1ce370
+    (2 / 4, (29, 216, 160)),   # logo-turquoise   #1dd8a0
+    (3 / 4, (15, 118, 58)),    # green-10 (light) #0f763a
+    (4 / 4, (24, 193, 95)),    # green-8  (wrap)
 ]
 
 

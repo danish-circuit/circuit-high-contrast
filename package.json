@@ -1,14 +1,14 @@
 {
-    "name": "ember-high-contrast",
-    "displayName": "Ember High Contrast",
-    "description": "A dark, high-contrast color theme with 8 accent color variants",
+    "name": "circuit-high-contrast",
+    "displayName": "Circuit High Contrast",
+    "description": "Dark and light high-contrast color themes built on the Circuit design system palette",
     "version": "0.6.1",
-    "publisher": "danielhdzzz",
+    "publisher": "danish-circuit",
     "repository": {
         "type": "git",
-        "url": "https://github.com/danielhdzzz/vscode-ember-high-contrast"
+        "url": "https://github.com/danish-circuit/circuit-high-contrast"
     },
-    "homepage": "https://github.com/danielhdzzz/vscode-ember-high-contrast",
+    "homepage": "https://github.com/danish-circuit/circuit-high-contrast",
     "engines": {
         "vscode": "^1.28.0"
     },
@@ -22,51 +22,21 @@
         "Themes"
     ],
     "galleryBanner": {
-        "color": "#1e1e1e",
+        "color": "#000000",
         "theme": "dark"
     },
     "icon": "icon.png",
     "contributes": {
         "themes": [
             {
-                "label": "Ember High Contrast (orange)",
+                "label": "Circuit High Contrast Dark",
                 "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-orange.json"
+                "path": "./themes/circuit-high-contrast-dark.json"
             },
             {
-                "label": "Ember High Contrast (gray)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-gray.json"
-            },
-            {
-                "label": "Ember High Contrast (purple)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-purple.json"
-            },
-            {
-                "label": "Ember High Contrast (red)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-red.json"
-            },
-            {
-                "label": "Ember High Contrast (yellow)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-yellow.json"
-            },
-            {
-                "label": "Ember High Contrast (green)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-green.json"
-            },
-            {
-                "label": "Ember High Contrast (blue)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-blue.json"
-            },
-            {
-                "label": "Ember High Contrast (white)",
-                "uiTheme": "vs-dark",
-                "path": "./themes/ember-high-contrast-white.json"
+                "label": "Circuit High Contrast Light",
+                "uiTheme": "vs",
+                "path": "./themes/circuit-high-contrast-light.json"
             }
         ]
     },
